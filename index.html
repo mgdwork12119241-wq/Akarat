@@ -18,7 +18,7 @@
         <a href="#map">الخريطة</a>
         <a href="#about">عن المنصة</a>
       </nav>
-      <button class="add-btn" onclick="showToast('قريباً: إضافة إعلان جديد')">+ أضف إعلان</button>
+      <button class="add-btn" onclick="showToast('إرسال طلب إعلان ستكون متاحة بعد تجهيز نموذج الإضافة')">+ أضف إعلان</button>
     </div>
   </header>
 
@@ -48,25 +48,27 @@
       <div class="chips">
         <button class="chip active" data-deal="all">الكل</button><button class="chip" data-deal="rent">للإيجار</button><button class="chip" data-deal="sale">للبيع</button>
       </div>
+      <div id="listingStatus" class="empty">جاري تحميل العقارات...</div>
       <div id="listingGrid" class="listing-grid"></div>
-      <div id="emptyState" class="empty hidden">لا توجد نتائج مطابقة للبحث.</div>
+      <div id="emptyState" class="empty hidden">لا توجد عقارات منشورة مطابقة للبحث.</div>
     </section>
 
     <section class="map-section" id="map">
       <div class="container map-wrap">
-        <div class="map-copy"><span class="eyebrow">قريباً</span><h2>اعثر على العقار<br>على الخريطة</h2><p>سنضيف خريطة تفاعلية تعرض العقارات والمحال المتاحة حسب المنطقة.</p><button class="primary" onclick="showToast('الخريطة التفاعلية قيد التطوير')">استكشف الخريطة</button></div>
+        <div class="map-copy"><span class="eyebrow">المرحلة التالية</span><h2>اعثر على العقار<br>على الخريطة</h2><p>الخريطة التفاعلية ستعرض العقارات المنشورة حسب موقعها الحقيقي.</p><button class="primary" onclick="showToast('الخريطة التفاعلية قيد التجهيز')">استكشف الخريطة</button></div>
         <div class="map-placeholder"><div class="map-grid"></div><span class="pin p1">⌂</span><span class="pin p2">⌂</span><span class="pin p3">⌂</span><span class="pin p4">⌂</span><div class="map-label">خريطة العقارات</div></div>
       </div>
     </section>
 
     <section class="container about section" id="about">
-      <div><span class="eyebrow">مصدر المحتوى</span><h2>منشورات العقارات<br>في مكان واحد.</h2></div>
-      <div class="about-text"><p>صُممت المنصة لتكون واجهة مرتبة للمحتوى العقاري المنشور على صفحات عامة. لاحقاً يمكن ربطها بمصدر المحتوى الرسمي وإظهار الإعلانات داخل التطبيق بشكل منظم.</p><div class="steps"><span>01</span><b>منشور جديد</b><span>→</span><span>02</span><b>تصنيف تلقائي</b><span>→</span><span>03</span><b>يظهر للمستخدم</b></div></div>
+      <div><span class="eyebrow">إدارة المحتوى</span><h2>الإعلانات تمر<br>عبر المراجعة.</h2></div>
+      <div class="about-text"><p>يمكن للزائر إرسال طلب عقار، لكن الإعلان لا يصبح منشوراً تلقائياً. تتم مراجعة الطلب من الإدارة قبل ظهوره للعامة.</p><div class="steps"><span>01</span><b>طلب إعلان</b><span>→</span><span>02</span><b>مراجعة الإدارة</b><span>→</span><span>03</span><b>نشر</b></div></div>
     </section>
   </main>
 
-  <footer><div class="container footer-inner"><b>⌂ عقارات</b><span>منصة تجريبية — الإصدار الأول</span><span>© 2026</span></div></footer>
+  <footer><div class="container footer-inner"><b>⌂ عقارات</b><span>منصة عقارية</span><span>© 2026</span></div></footer>
   <div id="toast" class="toast"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>
