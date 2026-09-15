@@ -1,127 +1,30 @@
-const SUPABASE_URL = 'https://utvwvwlrsqoccqwxgfil.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_bR3lG3PwdaX3XSyo6s3_uQ_25LWaOCC';
-
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
-let listings = [];
-const labels = { rent: 'للإيجار', sale: 'للبيع' };
-const typeLabels = {
-  apartment: 'شقة', house: 'منزل', villa: 'فيلا', land: 'أرض',
-  shop: 'محل', office: 'مكتب', building: 'مبنى', other: 'أخرى'
-};
-
-const escapeHtml = (value = '') => String(value)
-  .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-  .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
-
-function formatPrice(price) {
-  if (price === null || price === undefined || price === '') return 'السعر عند التواصل';
-  return `${Number(price).toLocaleString('ar-SY')} ل.س`;
-}
-
-function formatDetails(item) {
-  const parts = [];
-  if (item.rooms !== null && item.rooms !== undefined) parts.push(`${item.rooms} غرف`);
-  if (item.area !== null && item.area !== undefined) parts.push(`${Number(item.area).toLocaleString('ar-SY')} م²`);
-  return parts.join(' · ') || 'التفاصيل متوفرة داخل الإعلان';
-}
-
-function normalizeListing(row) {
-  const firstImage = row.property_images?.slice().sort((a, b) => a.sort_order - b.sort_order)[0];
-  return {
-    id: row.id,
-    deal: row.deal_type,
-    type: row.property_type,
-    title: row.title,
-    location: row.address || 'الموقع عند التواصل',
-    details: formatDetails(row),
-    price: formatPrice(row.price),
-    image: firstImage?.image_url || '',
-    latitude: row.latitude,
-    longitude: row.longitude,
-    images: row.property_images || []
-  };
-}
-
-async function loadListings() {
-  const status = document.getElementById('listingStatus');
-  try {
-    const { data, error } = await db
-      .from('properties')
-      .select(`id,title,description,property_type,deal_type,price,area,rooms,address,latitude,longitude,status,property_images(id,image_url,sort_order)`)
-      .in('status', ['published', 'sold', 'rented'])
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    listings = (data || []).map(normalizeListing);
-    status.classList.add('hidden');
-    render(listings);
-  } catch (error) {
-    console.error('Supabase listings error:', error);
-    status.textContent = 'تعذر تحميل العقارات حالياً. تأكد من اتصال قاعدة البيانات.';
-    document.getElementById('emptyState').classList.add('hidden');
-  }
-}
-
-function render(items = listings) {
-  const grid = document.getElementById('listingGrid');
-  const empty = document.getElementById('emptyState');
-
-  grid.innerHTML = items.map(x => `
-    <article class="listing">
-      <div class="listing-img" ${x.image ? `style="background-image:url('${escapeHtml(x.image)}')"` : ''}>
-        <span class="badge">${escapeHtml(labels[x.deal] || x.deal)}</span>
-      </div>
-      <div class="listing-body">
-        <h3>${escapeHtml(x.title)}</h3>
-        <div class="meta">📍 ${escapeHtml(x.location)}</div>
-        <div class="meta">${escapeHtml(typeLabels[x.type] || x.type)} · ${escapeHtml(x.details)}</div>
-        <div class="price">${escapeHtml(x.price)} <small>${x.deal === 'rent' ? 'شهرياً' : ''}</small></div>
-      </div>
-    </article>
-  `).join('');
-
-  empty.classList.toggle('hidden', items.length > 0);
-}
-
-function filterListings() {
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  const deal = document.getElementById('dealFilter').value;
-  const type = document.getElementById('typeFilter').value;
-  render(listings.filter(x =>
-    (deal === 'all' || x.deal === deal) &&
-    (type === 'all' || x.type === type) &&
-    (!q || `${x.title} ${x.location} ${x.details} ${typeLabels[x.type] || ''}`.toLowerCase().includes(q))
-  ));
-}
-
-function resetFilters() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('dealFilter').value = 'all';
-  document.getElementById('typeFilter').value = 'all';
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  document.querySelector('.chip[data-deal="all"]')?.classList.add('active');
-  render();
-}
-
-document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click', () => {
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  chip.classList.add('active');
-  document.getElementById('dealFilter').value = chip.dataset.deal;
-  filterListings();
-}));
-
-document.getElementById('searchInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') filterListings();
-});
-
-function showToast(message) {
-  const t = document.getElementById('toast');
-  t.textContent = message;
-  t.classList.add('show');
-  clearTimeout(window.toastTimer);
-  window.toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
-}
-
-loadListings();
+// Akarat frontend: Supabase listings, public submission form, admin-only dashboard.
+const SUPABASE_URL='https://utvwvwlrsqoccqwxgfil.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_bR3lG3PwdaX3XSyo6s3_uQ_25LWaOCC';
+const {createClient}=supabase; const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let listings=[]; const labels={rent:'للإيجار',sale:'للبيع'}; const typeLabels={apartment:'شقة',house:'منزل',villa:'فيلا',land:'أرض',shop:'محل',office:'مكتب',building:'مبنى',other:'أخرى'};
+const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+const price=v=>v==null||v===''?'السعر عند التواصل':`${Number(v).toLocaleString('ar-SY')} ل.س`;
+const details=x=>[x.rooms!=null?`${x.rooms} غرف`:'',x.area!=null?`${Number(x.area).toLocaleString('ar-SY')} م²`:'' ].filter(Boolean).join(' · ')||'التفاصيل متوفرة داخل الإعلان';
+function normalize(x){const im=(x.property_images||[]).slice().sort((a,b)=>a.sort_order-b.sort_order)[0];return {id:x.id,deal:x.deal_type,type:x.property_type,title:x.title,location:x.address||'الموقع عند التواصل',details:details(x),price:price(x.price),image:im?.image_url||''}}
+async function loadListings(){const s=document.getElementById('listingStatus');try{const {data,error}=await db.from('properties').select('id,title,description,property_type,deal_type,price,area,rooms,address,latitude,longitude,status,property_images(id,image_url,sort_order)').in('status',['published','sold','rented']).order('created_at',{ascending:false});if(error)throw error;listings=(data||[]).map(normalize);s.classList.add('hidden');render()}catch(e){console.error(e);s.textContent='تعذر تحميل العقارات حالياً.'}}
+function render(items=listings){const g=document.getElementById('listingGrid'),e=document.getElementById('emptyState');g.innerHTML=items.map(x=>`<article class="listing"><div class="listing-img" ${x.image?`style="background-image:url('${esc(x.image)}')"`:''}><span class="badge">${esc(labels[x.deal]||x.deal)}</span></div><div class="listing-body"><h3>${esc(x.title)}</h3><div class="meta">📍 ${esc(x.location)}</div><div class="meta">${esc(typeLabels[x.type]||x.type)} · ${esc(x.details)}</div><div class="price">${esc(x.price)} <small>${x.deal==='rent'?'شهرياً':''}</small></div></div></article>`).join('');e.classList.toggle('hidden',items.length>0)}
+function filterListings(){const q=document.getElementById('searchInput').value.trim().toLowerCase(),d=document.getElementById('dealFilter').value,t=document.getElementById('typeFilter').value;render(listings.filter(x=>(d==='all'||x.deal===d)&&(t==='all'||x.type===t)&&(!q||`${x.title} ${x.location} ${x.details} ${typeLabels[x.type]||''}`.toLowerCase().includes(q))))}
+function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('dealFilter').value='all';document.getElementById('typeFilter').value='all';document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));document.querySelector('.chip[data-deal="all"]')?.classList.add('active');render()}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove('show'),2600)}
+function modal(html){let m=document.getElementById('appModal');if(!m){m=document.createElement('div');m.id='appModal';m.className='modal';document.body.appendChild(m)}m.innerHTML=`<div class="modal-card"><button class="modal-close" onclick="closeModal()">×</button>${html}</div>`;m.classList.remove('hidden')}
+function closeModal(){document.getElementById('appModal')?.classList.add('hidden')}
+function openLogin(){modal(`<h2>دخول الإدارة</h2><p class="muted">تسجيل الدخول متاح للحساب الإداري المصرّح له فقط.</p><form id="loginForm" class="form-grid"><input name="email" type="email" placeholder="البريد الإلكتروني" required><input name="password" type="password" placeholder="كلمة المرور" required><button class="primary">تسجيل الدخول</button></form>`);document.getElementById('loginForm').onsubmit=login}
+async function login(e){e.preventDefault();const f=new FormData(e.target);const {error}=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(error){showToast('تسجيل الدخول غير متاح لهذا الحساب');return}const ok=await checkAdmin();if(ok)closeModal()}
+async function checkAdmin(){const {data:{user}}=await db.auth.getUser();if(!user)return false;const {data:p,error}=await db.from('profiles').select('role').eq('id',user.id).single();if(error||p?.role!=='admin'){await db.auth.signOut();showToast('تسجيل الدخول غير متاح لهذا الحساب');return false}showAdmin();return true}
+function showAdmin(){let panel=document.getElementById('adminPanel');if(!panel){panel=document.createElement('section');panel.id='adminPanel';panel.className='admin-section';panel.innerHTML=`<div class="container"><div class="admin-head"><div><span class="eyebrow">إدارة خاصة</span><h2>لوحة الإدارة</h2><p>طلبات الزوار لا تصبح منشورة إلا بموافقتك.</p></div><button class="ghost" onclick="signOut()">تسجيل الخروج</button></div><div class="admin-grid"><div class="admin-card"><h3>طلبات الإعلانات</h3><div id="submissionList">جاري التحميل...</div></div><div class="admin-card"><h3>إضافة عقار مباشرة</h3><p class="muted">الإعلان الذي تضيفه هنا ينشر مباشرة باسم الإدارة.</p><form id="adminPropertyForm" class="form-grid"><input name="title" placeholder="عنوان الإعلان" required><select name="property_type"><option value="apartment">شقة</option><option value="house">منزل</option><option value="villa">فيلا</option><option value="land">أرض</option><option value="shop">محل</option><option value="office">مكتب</option><option value="building">مبنى</option><option value="other">أخرى</option></select><select name="deal_type"><option value="sale">للبيع</option><option value="rent">للإيجار</option></select><input name="price" type="number" min="0" placeholder="السعر"><input name="area" type="number" min="0" placeholder="المساحة م²"><input name="rooms" type="number" min="0" placeholder="عدد الغرف"><input name="address" placeholder="العنوان"><input name="owner_name" placeholder="اسم المالك"><input name="owner_phone" placeholder="هاتف المالك"><textarea name="description" placeholder="تفاصيل الإعلان"></textarea><button class="primary">نشر العقار</button></form></div></div></div>`;document.body.appendChild(panel);document.getElementById('adminPropertyForm').onsubmit=adminAdd}panel.classList.remove('hidden');loadSubmissions();panel.scrollIntoView({behavior:'smooth'})}
+async function loadSubmissions(){const box=document.getElementById('submissionList');const {data,error}=await db.from('property_submissions').select('*').order('created_at',{ascending:false});if(error){box.textContent='تعذر تحميل الطلبات.';return}if(!data?.length){box.innerHTML='<div class="empty">لا توجد طلبات حالياً.</div>';return}box.innerHTML=data.map(s=>`<div class="submission"><b>${esc(s.title)}</b><span>${esc(typeLabels[s.property_type]||s.property_type)} · ${esc(labels[s.deal_type]||s.deal_type)} · ${esc(s.submitter_name)} · ${esc(s.submitter_phone)}</span><small>${esc(s.address||'')}</small><div class="submission-actions">${s.status==='pending'?`<button class="primary" onclick="approveSubmission('${s.id}')">موافقة ونشر</button><button class="danger" onclick="rejectSubmission('${s.id}')">رفض</button>`:`<span>الحالة: ${esc(s.status)}</span>`}</div></div>`).join('')}
+async function approveSubmission(id){const {data:s,error}=await db.from('property_submissions').select('*').eq('id',id).single();if(error||!s)return showToast('تعذر قراءة الطلب');const {data:{user}}=await db.auth.getUser();const {error:e}=await db.from('properties').insert({title:s.title,description:s.description,property_type:s.property_type,deal_type:s.deal_type,price:s.price,area:s.area,rooms:s.rooms,address:s.address,latitude:s.latitude,longitude:s.longitude,owner_name:s.owner_name,owner_phone:s.owner_phone,status:'published',published_at:new Date().toISOString(),created_by:user.id});if(e)return showToast('تعذر نشر الإعلان');await db.from('property_submissions').update({status:'approved',reviewed_at:new Date().toISOString(),reviewed_by:user.id}).eq('id',id);showToast('تم نشر الإعلان');loadSubmissions();loadListings()}
+async function rejectSubmission(id){const {data:{user}}=await db.auth.getUser();const reason=prompt('سبب الرفض (اختياري):')||null;const {error}=await db.from('property_submissions').update({status:'rejected',admin_note:reason,reviewed_at:new Date().toISOString(),reviewed_by:user.id}).eq('id',id);showToast(error?'تعذر رفض الطلب':'تم رفض الطلب');loadSubmissions()}
+async function adminAdd(e){e.preventDefault();const f=new FormData(e.target);const {data:{user}}=await db.auth.getUser();const row=Object.fromEntries(f.entries());['price','area','rooms'].forEach(k=>{row[k]=row[k]?Number(row[k]):null});Object.assign(row,{status:'published',published_at:new Date().toISOString(),created_by:user.id});const {error}=await db.from('properties').insert(row);showToast(error?'تعذر نشر العقار':'تم نشر العقار');if(!error){e.target.reset();loadListings()}}
+async function signOut(){await db.auth.signOut();document.getElementById('adminPanel')?.classList.add('hidden');showToast('تم تسجيل الخروج')}
+function openSubmission(){modal(`<h2>إضافة إعلان</h2><p class="muted">أرسل بيانات العقار، وسيصل الطلب إلى الإدارة للمراجعة. لن يظهر الإعلان للعامة قبل الموافقة.</p><form id="submissionForm" class="form-grid"><input name="submitter_name" placeholder="اسمك" required><input name="submitter_phone" placeholder="رقم هاتفك" required><input name="title" placeholder="عنوان الإعلان" required><select name="property_type"><option value="apartment">شقة</option><option value="house">منزل</option><option value="villa">فيلا</option><option value="land">أرض</option><option value="shop">محل</option><option value="office">مكتب</option><option value="building">مبنى</option><option value="other">أخرى</option></select><select name="deal_type"><option value="sale">للبيع</option><option value="rent">للإيجار</option></select><input name="price" type="number" min="0" placeholder="السعر"><input name="area" type="number" min="0" placeholder="المساحة م²"><input name="rooms" type="number" min="0" placeholder="عدد الغرف"><input name="address" placeholder="العنوان"><input name="owner_name" placeholder="اسم المالك"><input name="owner_phone" placeholder="هاتف المالك"><textarea name="description" placeholder="تفاصيل العقار"></textarea><button class="primary">إرسال الطلب</button></form>`);document.getElementById('submissionForm').onsubmit=submitProperty}
+async function submitProperty(e){e.preventDefault();const f=new FormData(e.target),row=Object.fromEntries(f.entries());['price','area','rooms'].forEach(k=>{row[k]=row[k]?Number(row[k]):null});row.status='pending';const {error}=await db.from('property_submissions').insert(row);if(error){showToast('تعذر إرسال الطلب حالياً');return}closeModal();showToast('تم إرسال الإعلان، وسيبقى قيد المراجعة حتى موافقة الإدارة')}
+document.querySelector('.add-btn')?.addEventListener('click',openSubmission);document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');document.getElementById('dealFilter').value=c.dataset.deal;filterListings()}));document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')filterListings()});
+const adminBtn=document.createElement('button');adminBtn.className='login-btn';adminBtn.textContent='دخول الإدارة';adminBtn.onclick=openLogin;document.querySelector('.nav')?.appendChild(adminBtn);
+loadListings();db.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN')checkAdmin()});
